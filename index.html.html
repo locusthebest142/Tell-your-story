@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tell your story.</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #f6f1e6;
+    --bg-raised: #ece2cd;
+    --ink: #2b2620;
+    --ink-soft: #7d7360;
+    --line: #ddd0b4;
+    --accent: #7c4a2d;
+    --accent-ink: #f6f1e6;
+    --radius: 6px;
+    --max-w: 640px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Lora', Georgia, serif;
+  }
+
+  body{
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, .display{
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  button{ font-family: inherit; }
+
+  .view{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 24px 80px;
+  }
+
+  .view.hidden{ display: none; }
+
+  .view-inner{
+    width: 100%;
+    max-width: var(--max-w);
+  }
+
+  .view-inner.wide{ max-width: 880px; }
+
+  .fade-in{ animation: fadeIn 0.4s ease both; }
+  @keyframes fadeIn{ from{ opacity:0; transform: translateY(6px); } to{ opacity:1; transform: translateY(0); } }
+
+  /* -------- shared bits -------- */
+  .site-title{
+    font-size: 1.6rem;
+    text-align: center;
+  }
+  .tagline{
+    color: var(--ink-soft);
+    font-style: italic;
+    text-align: center;
+    font-size: 0.95rem;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .top-nav{
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    z-index: 10;
+    background: linear-gradient(var(--bg), rgba(246,241,230,0));
+  }
+  .top-nav button{
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-style: italic;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .top-nav button:hover{ color: var(--ink); }
+  .top-nav .brand{ font-family: 'Fraunces', serif; font-style: normal; color: var(--ink); font-weight: 600; }
+
+  input[type="text"], select, textarea{
+    width: 100%;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    padding: 10px 2px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  input[type="text"]:focus, select:focus, textarea:focus{
+    border-bottom-color: var(--accent);
+  }
+  textarea{ resize: vertical; min-height: 100px; line-height: 1.55; }
+  label{ display:block; font-size: 0.82rem; color: var(--ink-soft); margin: 22px 0 4px; }
+  label:first-of-type{ margin-top: 0; }
+
+  .btn{
+    font-size: 0.95rem;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+  }
+  .btn:hover{ opacity: 0.9; }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ opacity: 0.45; cursor: default; }
+  .btn.ghost{
+    background: none;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn.ghost:hover{ border-color: var(--accent); color: var(--accent); }
+
+  .link-btn{
+    background: none; border: none; padding: 0;
+    color: var(--ink-soft); font-size: 0.85rem; font-style: italic;
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  }
+  .link-btn:hover{ color: var(--ink); }
+
+  *:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .status{ min-height: 1.2em; font-size: 0.82rem; color: var(--ink-soft); margin-top: 10px; }
+  .status.error{ color: #8a3b2f; }
+
+  .choice-row{ display:flex; gap: 16px; justify-content:center; margin-top: 36px; flex-wrap: wrap; }
+
+  .pulse{ display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--accent); margin-right: 8px; animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
+
+  /* -------- welcome -------- */
+  #welcomeView .view-inner{ text-align: center; }
+  .name-field{ margin: 32px auto 0; max-width: 320px; text-align: left; }
+
+  /* -------- home -------- */
+  .home-count{ text-align:center; color: var(--ink-soft); font-size: 0.85rem; margin-top: 14px; }
+  .big-choice{
+    display:block; width: 100%; text-align:left;
+    background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px 24px; margin-top: 16px; cursor:pointer; transition: border-color .2s ease, transform .1s ease;
+  }
+  .big-choice:hover{ border-color: var(--accent); }
+  .big-choice:active{ transform: translateY(1px); }
+  .big-choice h3{ font-size: 1.15rem; margin-bottom: 6px; }
+  .big-choice p{ margin:0; color: var(--ink-soft); font-size: 0.88rem; }
+
+  /* -------- categories grid -------- */
+  .cat-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 28px;
+  }
+  @media (max-width: 560px){ .cat-grid{ grid-template-columns: 1fr; } }
+
+  .cat-card{
+    text-align:left; background: var(--bg-raised); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 22px 20px; cursor:pointer;
+    transition: border-color .2s ease, transform .1s ease;
+  }
+  .cat-card:hover{ border-color: var(--accent); }
+  .cat-card:active{ transform: translateY(1px); }
+  .cat-card h3{ font-size: 1.05rem; margin-bottom: 6px; }
+  .cat-card p{ margin:0; color: var(--ink-soft); font-size: 0.83rem; line-height: 1.4; }
+
+  /* -------- category story list -------- */
+  .section-label{ font-size: 0.82rem; color: var(--ink-soft); font-style: italic; margin: 36px 0 12px; }
+  .section-label:first-of-type{ margin-top: 8px; }
+
+  .story-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap: 16px;
+    padding: 18px 0; border-top: 1px solid var(--line); cursor:pointer;
+  }
+  .story-row:last-child{ border-bottom: 1px solid var(--line); }
+  .story-row:hover .story-title{ color: var(--accent); }
+  .story-title{ font-family:'Fraunces',serif; font-weight:600; font-size:1.05rem; transition: color .2s ease; }
+  .story-meta{ color: var(--ink-soft); font-size: 0.78rem; margin-top: 4px; font-style: italic; }
+  .story-likes{ white-space:nowrap; color: var(--ink-soft); font-size: 0.85rem; padding-top: 2px; }
+  .empty-note{ text-align:center; color: var(--ink-soft); font-style: italic; padding: 40px 0; }
+
+  /* -------- write view -------- */
+  .page-block{ border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 14px; position:relative; }
+  .page-block-label{ font-size: 0.78rem; color: var(--ink-soft); font-style: italic; margin-bottom: 8px; }
+  .remove-page{
+    position:absolute; top:10px; right:12px; background:none; border:none;
+    color: var(--ink-soft); font-size: 0.85rem; cursor:pointer;
+  }
+  .remove-page:hover{ color: #8a3b2f; }
+  .add-page-btn{ margin-top: 14px; }
+  .publish-row{ margin-top: 30px; display:flex; align-items:center; gap: 16px; }
+
+  /* -------- reader view -------- */
+  .reader-header{ text-align:center; }
+  .reader-category{ color: var(--ink-soft); font-size: 0.78rem; font-style: italic; text-transform: lowercase; }
+  .reader-title{ font-size: 1.7rem; margin-top: 8px; line-height: 1.25; }
+  .reader-author{ color: var(--ink-soft); font-size: 0.85rem; margin-top: 8px; font-style: italic; }
+
+  .book{
+    margin-top: 32px;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 42px 36px;
+    min-height: 260px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .page-text{
+    font-size: 1.12rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .page-controls{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top: 18px;
+  }
+  .page-controls .page-count{ color: var(--ink-soft); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  .page-controls .nav-btns{ display:flex; gap: 10px; }
+  .nav-btn{
+    background:none; border: 1px solid var(--line); color: var(--ink);
+    border-radius: var(--radius); padding: 8px 16px; cursor:pointer; font-size:0.9rem;
+  }
+  .nav-btn:hover{ border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled{ opacity:0.35; cursor:default; }
+
+  .listen-row{ text-align:center; margin-top: 22px; }
+
+  .finish-panel{ margin-top: 48px; border-top: 1px solid var(--line); padding-top: 32px; }
+  .like-row{ display:flex; align-items:center; gap: 14px; }
+  .like-btn{
+    display:flex; align-items:center; gap: 8px;
+    background:none; border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 18px; cursor:pointer; color: var(--ink); font-size: 0.92rem;
+  }
+  .like-btn:hover{ border-color: var(--accent); }
+  .like-btn.liked{ border-color: var(--accent); color: var(--accent); }
+  .heart{ width:12px; height:12px; border-radius:50% 50% 50% 0; background: currentColor; transform: rotate(45deg); display:inline-block; }
+
+  .comments{ margin-top: 36px; }
+  .comment-item{ padding: 14px 0; border-top: 1px solid var(--line); }
+  .comment-author{ font-size: 0.82rem; color: var(--ink-soft); font-style: italic; margin-bottom: 4px; }
+  .comment-text{ line-height: 1.55; }
+  .comment-form{ margin-top: 20px; }
+
+  /* -------- modal -------- */
+  .modal-overlay{
+    position: fixed; inset:0; background: rgba(43,38,32,0.55);
+    display:flex; align-items:center; justify-content:center; padding: 24px; z-index: 50;
+  }
+  .modal-overlay.hidden{ display:none; }
+  .modal-box{
+    background: var(--bg); border-radius: 10px; padding: 36px 32px;
+    max-width: 400px; width:100%; text-align:center;
+    box-shadow: 0 12px 40px rgba(43,38,32,0.25);
+  }
+  .modal-box h3{ font-size: 1.3rem; margin-bottom: 10px; }
+  .modal-box p{ color: var(--ink-soft); font-size: 0.9rem; line-height: 1.5; margin: 0 0 24px; }
+  .modal-actions{ display:flex; flex-direction:column; gap: 10px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <button class="brand" id="navBrand" type="button">Tell your story.</button>
+  <button class="link-btn" id="navHome" type="button" style="display:none;">home</button>
+</div>
+
+<!-- ============ WELCOME ============ -->
+<section class="view" id="welcomeView">
+  <div class="view-inner fade-in">
+    <h1 class="site-title display">Tell your story.</h1>
+    <p class="tagline">True stories, from people who almost gave up.<br>Read them, or leave your own.</p>
+
+    <div class="name-field">
+      <label for="nameInput">Sign up with a name (optional)</label>
+      <input type="text" id="nameInput" placeholder="e.g. Maria" maxlength="30">
+    </div>
+
+    <div class="choice-row">
+      <button class="btn" id="continueNamedBtn" type="button">Continue with this name</button>
+      <button class="btn ghost" id="continueAnonBtn" type="button">Continue anonymously</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOME ============ -->
+<section class="view hidden" id="homeView">
+  <div class="view-inner fade-in">
+    <h2 class="display" style="font-size:1.5rem; text-align:center;">What would you like to do?</h2>
+    <p class="home-count" id="homeCount"></p>
+
+    <button class="big-choice" id="goWriteBtn" type="button">
+      <h3>Tell your story</h3>
+      <p>Share something that happened to you — a miracle, a turnaround, a leap of faith.</p>
+    </button>
+
+    <button class="big-choice" id="goReadBtn" type="button">
+      <h3>Read stories</h3>
+      <p>Browse true stories from others, by category.</p>
+    </button>
+  </div>
+</section>
+
+<!-- ============ WRITE ============ -->
+<section class="view hidden" id="writeView">
+  <div class="view-inner fade-in">
+    <h2 class="display" style="font-size:1.4rem;">Tell your story</h2>
+    <p class="tagline" style="text-align:left; margin-top:6px;">Write it the way you'd want to read it — one page at a time.</p>
+
+    <label for="titleInput">Title (required)</label>
+    <input type="text" id="titleInput" placeholder="Give your story a name" maxlength="80">
+
+    <label for="categorySelect">Category (required)</label>
+    <select id="categorySelect">
+      <option value="" disabled selected>Choose a category</option>
+    </select>
+
+    <label style="margin-top:26px;">Your story, page by page</label>
+    <div id="pagesContainer"></div>
+    <button class="btn ghost add-page-btn" id="addPageBtn" type="button">+ Add another page</button>
+
+    <div class="publish-row">
+      <button class="btn" id="publishBtn" type="button">Publish story</button>
+      <button class="link-btn" id="cancelWriteBtn" type="button">cancel</button>
+    </div>
+    <div class="status" id="writeStatus" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ============ CATEGORIES ============ -->
+<section class="view hidden" id="categoriesView">
+  <div class="view-inner fade-in">
+    <h2 class="display" style="font-size:1.4rem; text-align:center;">Choose what you'd like to read</h2>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+</section>
+
+<!-- ============ CATEGORY STORY LIST ============ -->
+<section class="view hidden" id="categoryView">
+  <div class="view-inner fade-in">
+    <button class="link-btn" id="backToCatsBtn" type="button">← all categories</button>
+    <h2 class="display" style="font-size:1.4rem; margin-top:14px;" id="categoryTitle"></h2>
+    <p class="tagline" style="text-align:left; margin-top:6px;" id="categoryDesc"></p>
+
+    <div id="leaderboardWrap">
+      <p class="section-label">Most loved in this category</p>
+      <div id="leaderboardList"></div>
+    </div>
+
+    <p class="section-label">All stories</p>
+    <div id="storyList"></div>
+  </div>
+</section>
+
+<!-- ============ READER ============ -->
+<section class="view hidden" id="readerView">
+  <div class="view-inner fade-in">
+    <button class="link-btn" id="backToListBtn" type="button">← back</button>
+
+    <div class="reader-header">
+      <p class="reader-category" id="readerCategory"></p>
+      <h1 class="reader-title display" id="readerTitle"></h1>
+      <p class="reader-author" id="readerAuthor"></p>
+    </div>
+
+    <div class="book">
+      <p class="page-text" id="pageText"></p>
+    </div>
+
+    <div class="page-controls">
+      <div class="nav-btns">
+        <button class="nav-btn" id="prevPageBtn" type="button">Previous</button>
+        <button class="nav-btn" id="nextPageBtn" type="button">Next</button>
+      </div>
+      <span class="page-count" id="pageCount"></span>
+    </div>
+
+    <div class="listen-row">
+      <button class="btn ghost" id="listenBtn" type="button">Have this page read aloud</button>
+    </div>
+
+    <div class="finish-panel hidden" id="finishPanel">
+      <div class="like-row">
+        <button class="like-btn" id="likeBtn" type="button"><span class="heart" aria-hidden="true"></span><span id="likeLabel">Like this story</span></button>
+        <span class="story-likes" id="likeCount"></span>
+      </div>
+
+      <div class="comments">
+        <p class="section-label" id="commentsLabel">Comments</p>
+        <div id="commentsList"></div>
+
+        <div class="comment-form">
+          <label for="commentInput">Leave a comment</label>
+          <textarea id="commentInput" maxlength="500" placeholder="What did this story mean to you?"></textarea>
+          <button class="btn" id="submitCommentBtn" type="button" style="margin-top:12px;">Post comment</button>
+          <div class="status" id="commentStatus" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINISH MODAL ============ -->
+<div class="modal-overlay hidden" id="finishModal">
+  <div class="modal-box">
+    <h3>You've reached the end.</h3>
+    <p>You can leave a like or a comment for the author, or keep exploring.</p>
+    <div class="modal-actions">
+      <button class="btn" id="modalStayBtn" type="button">Stay and respond</button>
+      <button class="btn ghost" id="modalMoreBtn" type="button">Explore more stories</button>
+    </div>
+  </div>
+</div>
+
+<!--
+  =====================================================================
+  FIREBASE SETUP — paste your own project config below.
+  This is what lets every visitor read and comment on the same stories.
+  =====================================================================
+-->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* ============================================================
+   1. FIREBASE CONFIG — paste your project's values here
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "PASTE_YOUR_API_KEY_HERE",
+  authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
+  projectId: "PASTE_YOUR_PROJECT_ID_HERE",
+  storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
+  messagingSenderId: "PASTE_YOUR_SENDER_ID_HERE",
+  appId: "PASTE_YOUR_APP_ID_HERE"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storiesRef = db.collection("stories");
+
+/* ============================================================
+   2. CATEGORIES — edit this list to add or rename categories
+   ============================================================ */
+const CATEGORIES = [
+  { id: "miracles", name: "Miracles", desc: "Moments that shouldn't have happened, but did." },
+  { id: "broke-to-rich", name: "From Broke to Rich", desc: "Turning nothing into something." },
+  { id: "against-odds", name: "Against All Odds", desc: "When everything said it was impossible." },
+  { id: "love", name: "Love & Second Chances", desc: "Hearts that broke, and found their way back." },
+  { id: "fear", name: "Overcoming Fear", desc: "Facing what once felt impossible to face." },
+  { id: "new-beginnings", name: "New Beginnings", desc: "Starting over, and starting stronger." }
+];
+
+/* ============================================================
+   3. BASIC LANGUAGE FILTER
+   A simple, non-exhaustive list — it masks common insults and
+   slurs so the board stays civil. It is not a substitute for
+   checking in on your own site now and then.
+   ============================================================ */
+const BLOCKED_WORDS = [
+  "fuck","shit","bitch","asshole","bastard","cunt","whore","slut",
+  "faggot","retard","nigger","nigga","chink","spic","kike","tranny"
+];
+function maskProfanity(text){
+  let out = text;
+  BLOCKED_WORDS.forEach(word => {
+    const re = new RegExp("\\b" + word + "\\w*\\b", "gi");
+    out = out.replace(re, match => match[0] + "*".repeat(Math.max(match.length - 1, 1)));
+  });
+  return out;
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = {
+  user: JSON.parse(localStorage.getItem("tys_user") || "null"),
+  category: null,
+  story: null,
+  storyId: null,
+  pageIndex: 0,
+  finished: false
+};
+
+/* ============================================================
+   ELEMENTS
+   ============================================================ */
+const views = ["welcomeView","homeView","writeView","categoriesView","categoryView","readerView"];
+const navHome = document.getElementById("navHome");
+const navBrand = document.getElementById("navBrand");
+
+function showView(id){
+  views.forEach(v => document.getElementById(v).classList.toggle("hidden", v !== id));
+  navHome.style.display = (id === "welcomeView") ? "none" : "inline";
+  window.scrollTo({ top: 0, behavior: "auto" });
+  stopListening();
+}
+
+navHome.addEventListener("click", () => showView("homeView"));
+navBrand.addEventListener("click", () => showView(state.user ? "homeView" : "welcomeView"));
+
+/* ============================================================
+   WELCOME
+   ============================================================ */
+const nameInput = document.getElementById("nameInput");
+document.getElementById("continueNamedBtn").addEventListener("click", () => {
+  const name = nameInput.value.trim();
+  setUser(name || null);
+});
+document.getElementById("continueAnonBtn").addEventListener("click", () => setUser(null));
+
+function setUser(name){
+  state.user = { name: name, isAnonymous: !name };
+  localStorage.setItem("tys_user", JSON.stringify(state.user));
+  enterHome();
+}
+
+function enterHome(){
+  updateHomeCount();
+  showView("homeView");
+}
+
+if (state.user) enterHome();
+
+/* ============================================================
+   HOME
+   ============================================================ */
+document.getElementById("goWriteBtn").addEventListener("click", () => {
+  resetWriteForm();
+  showView("writeView");
+});
+document.getElementById("goReadBtn").addEventListener("click", () => showView("categoriesView"));
+
+const homeCount = document.getElementById("homeCount");
+let totalStoryCount = null;
+storiesRef.onSnapshot(snapshot => {
+  totalStoryCount = snapshot.size;
+  updateHomeCount();
+}, () => { /* fails silently until Firebase is configured */ });
+
+function updateHomeCount(){
+  if (totalStoryCount === null) { homeCount.textContent = ""; return; }
+  homeCount.innerHTML = '<span class="pulse"></span>' +
+    (totalStoryCount === 1 ? "1 story shared so far" : totalStoryCount + " stories shared so far");
+}
+
+/* ============================================================
+   CATEGORIES GRID
+   ============================================================ */
+const catGrid = document.getElementById("catGrid");
+CATEGORIES.forEach(cat => {
+  const card = document.createElement("button");
+  card.className = "cat-card";
+  card.type = "button";
+  card.innerHTML = `<h3>${cat.name}</h3><p>${cat.desc}</p>`;
+  card.addEventListener("click", () => openCategory(cat));
+  catGrid.appendChild(card);
+});
+
+document.getElementById("backToCatsBtn").addEventListener("click", () => showView("categoriesView"));
+
+/* ============================================================
+   WRITE VIEW
+   ============================================================ */
+const categorySelect = document.getElementById("categorySelect");
+CATEGORIES.forEach(cat => {
+  const opt = document.createElement("option");
+  opt.value = cat.id;
+  opt.textContent = cat.name;
+  categorySelect.appendChild(opt);
+});
+
+const pagesContainer = document.getElementById("pagesContainer");
+const titleInput = document.getElementById("titleInput");
+const writeStatus = document.getElementById("writeStatus");
+
+function resetWriteForm(){
+  titleInput.value = "";
+  categorySelect.value = "";
+  pagesContainer.innerHTML = "";
+  writeStatus.textContent = "";
+  addPageBlock();
+}
+
+function addPageBlock(){
+  const n = pagesContainer.children.length + 1;
+  const block = document.createElement("div");
+  block.className = "page-block";
+  block.innerHTML = `
+    <div class="page-block-label">Page ${n}</div>
+    <textarea class="page-textarea" placeholder="Write this page of your story..."></textarea>
+    ${n > 1 ? '<button type="button" class="remove-page">remove</button>' : ''}
+  `;
+  const removeBtn = block.querySelector(".remove-page");
+  if (removeBtn){
+    removeBtn.addEventListener("click", () => {
+      block.remove();
+      relabelPages();
+    });
+  }
+  pagesContainer.appendChild(block);
+}
+
+function relabelPages(){
+  [...pagesContainer.children].forEach((block, i) => {
+    block.querySelector(".page-block-label").textContent = "Page " + (i + 1);
+  });
+}
+
+document.getElementById("addPageBtn").addEventListener("click", addPageBlock);
+document.getElementById("cancelWriteBtn").addEventListener("click", () => showView("homeView"));
+
+document.getElementById("publishBtn").addEventListener("click", async () => {
+  const title = titleInput.value.trim();
+  const category = categorySelect.value;
+  const pageTexts = [...pagesContainer.querySelectorAll(".page-textarea")]
+    .map(t => t.value.trim())
+    .filter(t => t.length > 0);
+
+  if (!title){
+    writeStatus.textContent = "A title is required before you can publish.";
+    writeStatus.classList.add("error");
+    return;
+  }
+  if (!category){
+    writeStatus.textContent = "Please choose a category.";
+    writeStatus.classList.add("error");
+    return;
+  }
+  if (pageTexts.length === 0){
+    writeStatus.textContent = "Your story needs at least one page of text.";
+    writeStatus.classList.add("error");
+    return;
+  }
+
+  writeStatus.classList.remove("error");
+  writeStatus.textContent = "Publishing...";
+
+  try{
+    await storiesRef.add({
+      title: maskProfanity(title),
+      category: category,
+      pages: pageTexts.map(maskProfanity),
+      authorName: (state.user && state.user.name) ? state.user.name : "Anonymous",
+      likes: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    writeStatus.textContent = "Your story is live.";
+    setTimeout(() => {
+      const cat = CATEGORIES.find(c => c.id === category);
+      openCategory(cat);
+    }, 700);
+  }catch(err){
+    writeStatus.textContent = "Something went wrong publishing your story.";
+    console.error(err);
+  }
+});
+
+/* ============================================================
+   CATEGORY STORY LIST + LEADERBOARD
+   ============================================================ */
+const categoryTitle = document.getElementById("categoryTitle");
+const categoryDesc = document.getElementById("categoryDesc");
+const leaderboardList = document.getElementById("leaderboardList");
+const leaderboardWrap = document.getElementById("leaderboardWrap");
+const storyList = document.getElementById("storyList");
+
+function openCategory(cat){
+  state.category = cat;
+  categoryTitle.textContent = cat.name;
+  categoryDesc.textContent = cat.desc;
+  showView("categoryView");
+  loadCategoryStories(cat.id);
+}
+
+function relativeTime(date){
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes === 1 ? "a minute ago" : minutes + " minutes ago";
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours === 1 ? "an hour ago" : hours + " hours ago";
+  const days = Math.floor(hours / 24);
+  if (days < 30) return days === 1 ? "a day ago" : days + " days ago";
+  return date.toLocaleDateString();
+}
+
+function storyRow(doc){
+  const data = doc.data();
+  const row = document.createElement("div");
+  row.className = "story-row";
+  const date = data.createdAt ? data.createdAt.toDate() : new Date();
+  row.innerHTML = `
+    <div>
+      <div class="story-title">${data.title}</div>
+      <div class="story-meta">by ${data.authorName || "Anonymous"} · ${relativeTime(date)}</div>
+    </div>
+    <div class="story-likes">${data.likes || 0} ${data.likes === 1 ? "like" : "likes"}</div>
+  `;
+  row.addEventListener("click", () => openStory(doc.id, data));
+  return row;
+}
+
+function loadCategoryStories(categoryId){
+  leaderboardList.innerHTML = '<p class="empty-note">Loading...</p>';
+  storyList.innerHTML = "";
+
+  storiesRef.where("category", "==", categoryId).orderBy("likes", "desc").limit(5)
+    .get().then(snap => {
+      leaderboardList.innerHTML = "";
+      if (snap.empty){
+        leaderboardWrap.style.display = "none";
+      } else {
+        leaderboardWrap.style.display = "block";
+        snap.forEach(doc => leaderboardList.appendChild(storyRow(doc)));
+      }
+    }).catch(err => {
+      leaderboardWrap.style.display = "none";
+      console.error("Leaderboard query failed (you may need to create a Firestore index — check the console error for a link):", err);
+    });
+
+  storiesRef.where("category", "==", categoryId).orderBy("createdAt", "desc").limit(100)
+    .get().then(snap => {
+      storyList.innerHTML = "";
+      if (snap.empty){
+        storyList.innerHTML = '<p class="empty-note">No stories in this category yet. Be the first to share one.</p>';
+        return;
+      }
+      snap.forEach(doc => storyList.appendChild(storyRow(doc)));
+    }).catch(err => {
+      storyList.innerHTML = '<p class="empty-note">Couldn\'t load stories. Check your Firebase setup.</p>';
+      console.error(err);
+    });
+}
+
+/* ============================================================
+   READER VIEW
+   ============================================================ */
+const readerCategory = document.getElementById("readerCategory");
+const readerTitle = document.getElementById("readerTitle");
+const readerAuthor = document.getElementById("readerAuthor");
+const pageText = document.getElementById("pageText");
+const pageCount = document.getElementById("pageCount");
+const prevPageBtn = document.getElementById("prevPageBtn");
+const nextPageBtn = document.getElementById("nextPageBtn");
+const listenBtn = document.getElementById("listenBtn");
+const finishPanel = document.getElementById("finishPanel");
+const finishModal = document.getElementById("finishModal");
+const likeBtn = document.getElementById("likeBtn");
+const likeLabel = document.getElementById("likeLabel");
+const likeCount = document.getElementById("likeCount");
+const commentsList = document.getElementById("commentsList");
+const commentsLabel = document.getElementById("commentsLabel");
+
+document.getElementById("backToListBtn").addEventListener("click", () => {
+  showView("categoryView");
+  loadCategoryStories(state.category.id);
+});
+
+function openStory(id, data){
+  state.storyId = id;
+  state.story = data;
+  state.pageIndex = 0;
+  state.finished = false;
+
+  const cat = CATEGORIES.find(c => c.id === data.category);
+  readerCategory.textContent = cat ? cat.name : data.category;
+  readerTitle.textContent = data.title;
+  readerAuthor.textContent = "by " + (data.authorName || "Anonymous");
+
+  finishPanel.classList.add("hidden");
+  renderPage();
+  updateLikeUI();
+  loadComments(id);
+  showView("readerView");
+}
+
+function renderPage(){
+  const pages = state.story.pages || [""];
+  pageText.textContent = pages[state.pageIndex];
+  pageCount.textContent = (state.pageIndex + 1) + " / " + pages.length;
+  prevPageBtn.disabled = state.pageIndex === 0;
+  stopListening();
+}
+
+prevPageBtn.addEventListener("click", () => {
+  if (state.pageIndex > 0){
+    state.pageIndex--;
+    renderPage();
+  }
+});
+
+nextPageBtn.addEventListener("click", () => {
+  const pages = state.story.pages || [""];
+  if (state.pageIndex < pages.length - 1){
+    state.pageIndex++;
+    renderPage();
+  } else if (!state.finished){
+    state.finished = true;
+    finishPanel.classList.remove("hidden");
+    finishModal.classList.remove("hidden");
+  }
+});
+
+/* ---- AI narration (browser's built-in text-to-speech, no extra setup) ---- */
+let speaking = false;
+function stopListening(){
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  speaking = false;
+  listenBtn.textContent = "Have this page read aloud";
+}
+listenBtn.addEventListener("click", () => {
+  if (!window.speechSynthesis){
+    listenBtn.textContent = "Reading aloud isn't supported in this browser";
+    return;
+  }
+  if (speaking){
+    stopListening();
+    return;
+  }
+  const utter = new SpeechSynthesisUtterance(pageText.textContent);
+  utter.onend = () => { speaking = false; listenBtn.textContent = "Have this page read aloud"; };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+  speaking = true;
+  listenBtn.textContent = "Stop reading";
+});
+
+/* ---- modal ---- */
+document.getElementById("modalStayBtn").addEventListener("click", () => {
+  finishModal.classList.add("hidden");
+});
+document.getElementById("modalMoreBtn").addEventListener("click", () => {
+  finishModal.classList.add("hidden");
+  showView("categoriesView");
+});
+
+/* ---- likes (one per browser per story) ---- */
+function likedKey(id){ return "tys_liked_" + id; }
+
+function updateLikeUI(){
+  const liked = localStorage.getItem(likedKey(state.storyId)) === "true";
+  likeBtn.classList.toggle("liked", liked);
+  likeLabel.textContent = liked ? "You liked this" : "Like this story";
+  likeCount.textContent = (state.story.likes || 0) + (state.story.likes === 1 ? " like" : " likes");
+}
+
+likeBtn.addEventListener("click", async () => {
+  if (localStorage.getItem(likedKey(state.storyId)) === "true") return;
+  localStorage.setItem(likedKey(state.storyId), "true");
+  state.story.likes = (state.story.likes || 0) + 1;
+  updateLikeUI();
+  try{
+    await storiesRef.doc(state.storyId).update({
+      likes: firebase.firestore.FieldValue.increment(1)
+    });
+  }catch(err){ console.error(err); }
+});
+
+/* ---- comments ---- */
+function loadComments(storyId){
+  commentsList.innerHTML = '<p class="empty-note">Loading comments...</p>';
+  storiesRef.doc(storyId).collection("comments").orderBy("createdAt", "asc")
+    .onSnapshot(snap => {
+      commentsList.innerHTML = "";
+      commentsLabel.textContent = snap.size === 0 ? "Comments" : "Comments (" + snap.size + ")";
+      if (snap.empty){
+        commentsList.innerHTML = '<p class="empty-note">No comments yet. Be the first to respond.</p>';
+        return;
+      }
+      snap.forEach(doc => {
+        const c = doc.data();
+        const el = document.createElement("div");
+        el.className = "comment-item";
+        el.innerHTML = `<div class="comment-author">${c.authorName || "Anonymous"}</div><div class="comment-text"></div>`;
+        el.querySelector(".comment-text").textContent = c.text; // textContent keeps it safe
+        commentsList.appendChild(el);
+      });
+    }, err => console.error(err));
+}
+
+document.getElementById("submitCommentBtn").addEventListener("click", async () => {
+  const input = document.getElementById("commentInput");
+  const status = document.getElementById("commentStatus");
+  const text = input.value.trim();
+  if (!text){
+    status.textContent = "Write something before posting.";
+    return;
+  }
+  status.textContent = "Posting...";
+  try{
+    await storiesRef.doc(state.storyId).collection("comments").add({
+      text: maskProfanity(text),
+      authorName: (state.user && state.user.name) ? state.user.name : "Anonymous",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = "";
+    status.textContent = "";
+  }catch(err){
+    status.textContent = "Couldn't post your comment. Please try again.";
+    console.error(err);
+  }
+});
+</script>
+
+</body>
+</html>
